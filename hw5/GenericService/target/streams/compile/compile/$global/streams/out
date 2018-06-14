@@ -1,0 +1,4 @@
+[0m[[0m[31merror[0m] [0m[0m/Users/Lanny/Documents/CSC536 DS2/hw5/GenericService/src/main/scala/TestHarness.scala:15:19: Invalid literal number[0m
+[0m[[0m[31merror[0m] [0m[0m  val burstSize = 1000s[0m
+[0m[[0m[31merror[0m] [0m[0m                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m

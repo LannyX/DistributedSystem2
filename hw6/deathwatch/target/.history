@@ -1,0 +1,6 @@
+run
+lsof -i:2552
+exit
+run
+exit
+run

@@ -1,0 +1,181 @@
+Homework 4 
+Lanny Xu
+
+1
+See .jpeg submission.
+1. P0 sends request to coordinator and a message to each other processor.
+2. After receiving message from P0, P1 updates vector timestamps and sends another request to coordinator. Also sends message to other processors.
+3. Coordinator saves received requests in a priority queue based on their vector timestamp and pop out the minimum one, give permission.
+4. After P0 receives permission, it let coordinator know. Coordinator then pops out the next in priority queue. And repeat the process.
+
+2a)
+        T         |       U
+    ---------------------------------
+      lock	i |
+      read	i |
+      unlock	i |   
+                  |   lock	i
+                  |   write	i=55
+                  |   lock	j
+                  |   write	j=66
+                  |   commit
+                  |   unlock	i,j
+      lock	j |   
+      write  j=44 |   
+      commit      |   
+      unlock   j  |   
+
+
+b)
+By using two-phase locking, all T operations happen before U, the result is serialized.
+
+
+        T         |       U
+    ---------------------------------
+      lock	i |
+      read	i |
+      lock	j |   
+      write j=44  |   
+      unlock   i,j|   
+                  |   lock	i
+                  |   write	i=55
+                  |   lock	j
+                  |   write	j=66
+                  |   unlock	i,j
+
+
+3a)
+It is serialized.
+        T         Lock    	|       U           Lock
+    -------------------------------------------------------
+                   		|   write(i, 12);   lock i
+  				|		    unlock i
+    x = read(j);  lock j	|
+    y = read(i);  lock i	|   
+                  		|   write(k, 66);   lock k
+ 				|		    unlock k
+    write(k, 33); lock k	|
+                  		|   write(l, 22);   lock l
+		  unlock i,j,k  |
+				|		    unlock l
+
+It isn't non-strict. If U abort it may have the dirty read. Because the first line of U is write, if abort T could get the dirty read of i.
+
+
+b)
+It is not serialized.
+
+
+c)
+It is serialized.
+
+        T      Lock		|       U	           Lock
+    -------------------------------------------------------
+    x = read(j);        lock j	|
+             			|  write(i, 12);	lock i,k,l
+				|			unlock i
+                  		|  write(k, 66);	
+				|			unlock k
+                         	|
+    y = read(i);  	lock i	|   
+    write(k,33);	lock k	| 
+                  unlock j,i,k  |   
+                          	| write(l, 22)
+				|			unlock l
+The schedule is non-strict. It also could have dirty read if the U abort, T can also get dirty read.
+
+
+d)
+It is serialized.
+        T        Lock	 	 |       U		Lock
+    -------------------------------------------------------
+    x = read(j);  	Lock j	 |
+    y = read(i);  	Lock i	 |   
+    write(k, 33); 	Lock k	 | 
+ 		   Unlock j,i,k	 |
+                  		 |   write(i, 12);   Lock i
+                  		 |   write(k, 66);   Lock k
+                  		 |   write(l, 22);   lock l
+It is strict and no dirty read.
+
+
+e)
+It is serialized.
+        T       Lock 	  |       U		Lock
+    -------------------------------------------------------
+                  	  |   write(i, 12); 	Lock i,k,l
+                      	  |			unlock i
+    x = read(j);   Lock j |
+                  	  |   write(k, 66);		
+			  |			unlock k
+                  	  |   write(l, 22);		
+ 			  |			unlock l
+    y = read(i);   Lock i |   
+    write(k, 33);  Lock k | 
+ 	      Unlock j,i,k|
+It is non-strict. If transition U abort, T will have dirty read the i.
+
+
+4.
+a)
+U happens before T.
+		i	j	k	l
+Trd(T)		2	2
+Twr(T)				2
+Trd(U)
+Twr(U)		1		1	1
+
+for variable i, y=read(i) happens after write(i, 12) and Trd(T) > Twr(U)
+for variable k, write(k,33) happens after write(k, 66) and Twr(T) > Twr(U)
+Yes, it is possible to occur under pessimistic timestamp concurrency control.
+
+b)
+T happens before U.
+		i	j	k	l
+Trd(T)		1	1
+Twr(T)				1
+Trd(U)
+Twr(U)		2		2	2
+
+for variable i, write(i, 12) happens after y=read(i) and Trd(T) < Twr(U)
+for variable k, write(k,33) happens before write(k, 66) but Twr(T) < Twr(U)
+No, it is impossible to occur under pessimistic timestamp concurrency control.
+
+c)
+T happens before U.
+		i	j	k	l
+Trd(T)		1	1
+Twr(T)				1
+Trd(U)
+Twr(U)		2		2	2
+
+for variable i, y=read(i) happens after write(i, 12) but Trd(T) < Twr(U)
+for variable k, write(k,33) happens after write(k, 66) but Twr(T) < Twr(U)
+No, it is impossible to occur under pessimistic timestamp concurrency control.
+
+d)
+T happens before U.
+		i	j	k	l
+Trd(T)		1	1
+Twr(T)				1
+Trd(U)
+Twr(U)		2		2	2
+
+for variable i, write(i, 12) happens after y=read(i) and Trd(T) < Twr(U)
+for variable k, write(k,66) happens after write(k, 33) and Twr(T) < Twr(U)
+Yes, it is possible to occur under pessimistic timestamp concurrency control.
+
+
+5.
+P1 will write x first to 0 then to 1, then read y of value 1.
+P2 will read x then write y to 1, and finally read x of 0. However read x equal to 0 happens should before P1 write x to 1.
+Which means we firstly get from P2 {W(y)1}, then P1 {R(y)1}, we will get P1 {w(x)1} happens before {R(x)0}. But that doesn’t make sense.
+They have x and y in different sequence. So the execution of two processes is not sequentially consistent.
+
+
+
+6.
+The execution of processes is not casually consistent.
+P2 writes to x {W(x)0, W(x)1}; then P3 read x{R(x)1} and writes to y{W(y)2}. We can see x and y should be casually related. 
+But P1 reads y{R(y)2} before read x{R(x)0}.
+
